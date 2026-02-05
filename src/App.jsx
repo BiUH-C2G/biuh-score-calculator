@@ -67,6 +67,12 @@ const formatNumber = (value, digits = 2) => {
   return Number(value).toFixed(digits);
 };
 
+const gpaFromPercentage = (score, scale) => {
+  if (score === null || score === undefined || !Number.isFinite(score)) return null;
+  const clamped = Math.min(NMAX, Math.max(0, score));
+  return (clamped / NMAX) * scale;
+};
+
 const calculateTotals = (courses) => {
   const validCourses = courses.filter(
     (course) => isValidScore(course.score) && isValidCredit(course.credit)
@@ -174,6 +180,8 @@ export default function App() {
     const allCourses = semesterViews.flatMap((view) => view.allCourses);
     return calculateTotals(allCourses);
   }, [semesterViews]);
+  const overallGpa4 = gpaFromPercentage(overallTotals.weightedScore, 4);
+  const overallGpa5 = gpaFromPercentage(overallTotals.weightedScore, 5);
 
   const updateSemester = (id, updater) => {
     setSemesters((prev) =>
@@ -521,12 +529,20 @@ export default function App() {
               <span className="summary__value">{formatNumber(overallTotals.weightedGerman, 2)}</span>
             </div>
             <div className="summary__card">
+              <span className="summary__label">总 GPA（4 分制：美国/加拿大等）</span>
+              <span className="summary__value">{formatNumber(overallGpa4, 2)}</span>
+            </div>
+            <div className="summary__card">
+              <span className="summary__label">总 GPA（5 分制：中国/俄罗斯等）</span>
+              <span className="summary__value">{formatNumber(overallGpa5, 2)}</span>
+            </div>
+            <div className="summary__card">
               <span className="summary__label">总学分</span>
               <span className="summary__value">{formatNumber(overallTotals.totalCredits, 1)}</span>
             </div>
           </div>
           <p className="summary__note">
-            德国成绩换算采用修改后的巴伐利亚公式；未填写或无效成绩不会计入平均值。
+            德国成绩换算采用修改后的巴伐利亚公式；未填写或无效成绩不会计入平均值。（备注：4 分制常见于美国/加拿大；5 分制常见于中国/俄罗斯等；4/5 分制按百分制线性换算）
           </p>
         </section>
 
