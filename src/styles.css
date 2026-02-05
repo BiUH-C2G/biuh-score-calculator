@@ -124,7 +124,8 @@ body {
   border-radius: 999px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease,
+    color 0.2s ease, border-color 0.2s ease;
 }
 
 .tab:hover {
@@ -299,6 +300,10 @@ body {
   color: var(--teal);
 }
 
+.summary--swap {
+  animation: summarySwap 0.45s ease both;
+}
+
 .summary__note {
   margin-top: 16px;
   color: var(--muted);
@@ -333,6 +338,35 @@ body {
   color: var(--muted);
 }
 
+.culture-map {
+  margin-top: 8px;
+}
+
+.culture-map td,
+.culture-map th {
+  vertical-align: top;
+}
+
+.culture-map__row--i td {
+  background: #fff0e6;
+}
+
+.culture-map__row--ii td {
+  background: #e9f4ff;
+}
+
+.culture-map__row--iii td {
+  background: #e7f7ef;
+}
+
+.culture-map__row--iv td {
+  background: #fff6dc;
+}
+
+.table__row--enter {
+  animation: rowEnter 0.4s ease both;
+}
+
 @keyframes rise {
   from {
     opacity: 0;
@@ -341,6 +375,28 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes summarySwap {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rowEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const NMAX = 100;
 const NMIN = 60;
@@ -9,13 +9,13 @@ const CREDIT_STANDARD = {
 };
 
 const CHINESE_CULTURE_OPTIONS = [
-  { key: 'cc-1', label: 'Chinese culture 1', credit: 3 },
-  { key: 'cc-2', label: 'Chinese culture 2', credit: 3 },
-  { key: 'cc-3-1', label: 'Chinese culture 3-1', credit: 2 },
-  { key: 'cc-3-2', label: 'Chinese culture 3-2', credit: 2 },
-  { key: 'cc-3-3', label: 'Chinese culture 3-3', credit: 1 },
-  { key: 'cc-4-1', label: 'Chinese culture 4-1', credit: 2.5 },
-  { key: 'cc-4-2', label: 'Chinese culture 4-2', credit: 2.5 },
+  { key: 'cc-1', label: 'Chinese Culture I', credit: 3 },
+  { key: 'cc-2', label: 'Chinese Culture II', credit: 3 },
+  { key: 'cc-3-1', label: 'Chinese Culture III-1', credit: 2 },
+  { key: 'cc-3-2', label: 'Chinese Culture III-2', credit: 2 },
+  { key: 'cc-3-3', label: 'Chinese Culture III-3', credit: 1 },
+  { key: 'cc-4-1', label: 'Chinese Culture IV-1', credit: 2.5 },
+  { key: 'cc-4-2', label: 'Chinese Culture IV-2', credit: 2.5 },
 ];
 
 const CULTURE_MAP = CHINESE_CULTURE_OPTIONS.reduce((acc, item) => {
@@ -93,6 +93,15 @@ export default function App() {
   const initialSemester = useMemo(() => createSemester(), []);
   const [semesters, setSemesters] = useState([initialSemester]);
   const [activeSemesterId, setActiveSemesterId] = useState(initialSemester.id);
+  const [recentlyAddedCourse, setRecentlyAddedCourse] = useState(null);
+
+  useEffect(() => {
+    if (!recentlyAddedCourse) return;
+    const timeout = setTimeout(() => {
+      setRecentlyAddedCourse(null);
+    }, 450);
+    return () => clearTimeout(timeout);
+  }, [recentlyAddedCourse]);
 
   const semesterViews = useMemo(
     () =>
@@ -198,10 +207,12 @@ export default function App() {
   };
 
   const addMajorCourse = (semesterId) => {
+    const newCourseId = createId();
     updateSemester(semesterId, (semester) => ({
       ...semester,
-      majorCourses: [...semester.majorCourses, { id: createId(), name: '', score: '' }],
+      majorCourses: [...semester.majorCourses, { id: newCourseId, name: '', score: '' }],
     }));
+    setRecentlyAddedCourse({ semesterId, courseId: newCourseId });
   };
 
   const removeMajorCourse = (semesterId, courseId) => {
@@ -272,7 +283,7 @@ export default function App() {
               + 添加学期
             </button>
           </div>
-          <div className="summary">
+          <div className="summary summary--swap" key={activeSemesterId}>
             <div className="summary__card">
               <span className="summary__label">{activeLabel} 平均百分制</span>
               <span className="summary__value">
@@ -292,7 +303,7 @@ export default function App() {
           </div>
         </section>
 
-        <section className="panel" style={{ '--delay': 2 }}>
+        <section className="panel" style={{ '--delay': 2 }} key={`${activeSemesterId}-language`}>
           <div className="panel__header">
             <h2>语言课</h2>
             <p>{activeLabel} · English & German，单科 2.5 学分</p>
@@ -336,7 +347,7 @@ export default function App() {
           </div>
         </section>
 
-        <section className="panel" style={{ '--delay': 3 }}>
+        <section className="panel" style={{ '--delay': 3 }} key={`${activeSemesterId}-major`}>
           <div className="panel__header">
             <h2>专业课</h2>
             <p>{activeLabel} · 课程较多，可自行添加；专业课固定 5 学分</p>
@@ -354,9 +365,16 @@ export default function App() {
               const scoreInvalid = course.scoreValue !== null && !isValidScore(course.scoreValue);
               const german = germanGrade(course.scoreValue);
               const evalInfo = evaluation(course.scoreValue);
+              const isNewCourse =
+                recentlyAddedCourse &&
+                recentlyAddedCourse.semesterId === activeSemester.id &&
+                recentlyAddedCourse.courseId === course.id;
 
               return (
-                <div className="table__row" key={course.id}>
+                <div
+                  className={`table__row ${isNewCourse ? 'table__row--enter' : ''}`}
+                  key={course.id}
+                >
                   <span data-label="课程名称">
                     <input
                       className="input"
@@ -405,7 +423,7 @@ export default function App() {
           </div>
         </section>
 
-        <section className="panel" style={{ '--delay': 4 }}>
+        <section className="panel" style={{ '--delay': 4 }} key={`${activeSemesterId}-culture`}>
           <div className="panel__header">
             <h2>中国文化课</h2>
             <p>{activeLabel} · 每学期只选一门课程，学分按课程自动填写</p>
@@ -465,7 +483,7 @@ export default function App() {
           </div>
         </section>
 
-        <section className="panel" style={{ '--delay': 5 }}>
+        <section className="panel" style={{ '--delay': 5 }} key={`${activeSemesterId}-gpa`}>
           <div className="panel__header">
             <h2>{activeLabel} GPA</h2>
             <p>按本学期已录入课程的学分加权计算</p>
@@ -567,6 +585,74 @@ export default function App() {
               </table>
             </div>
           </div>
+        </section>
+
+        <section className="panel" style={{ '--delay': 8 }}>
+          <div className="panel__header">
+            <h2>Chinese Culture 对应表</h2>
+            <p>Chinese Culture 课程编号与实际授课名称对照</p>
+          </div>
+          <table className="scale culture-map">
+            <thead>
+              <tr>
+                <th>Chinese Culture 模块</th>
+                <th>课程选项</th>
+                <th>English Name</th>
+                <th>中文名称</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="culture-map__row culture-map__row--i">
+                <td>Chinese Culture I</td>
+                <td>Chinese Culture I</td>
+                <td>Entrepreneurship and Social Responsibilities</td>
+                <td>中外企业精神与社会责任</td>
+              </tr>
+              <tr className="culture-map__row culture-map__row--ii">
+                <td>Chinese Culture II</td>
+                <td>Chinese Culture II</td>
+                <td>Cross-Cultural Studies</td>
+                <td>跨文化交流</td>
+              </tr>
+              <tr className="culture-map__row culture-map__row--iii">
+                <td rowSpan={4}>Chinese Culture III</td>
+                <td>Chinese Culture III</td>
+                <td>Chinese Cultural Spirits</td>
+                <td>中华人文精神与制度</td>
+              </tr>
+              <tr className="culture-map__row culture-map__row--sub">
+                <td>Chinese Culture III-1</td>
+                <td></td>
+                <td>思想道德与法治</td>
+              </tr>
+              <tr className="culture-map__row culture-map__row--sub">
+                <td>Chinese Culture III-2</td>
+                <td></td>
+                <td>马克思主义基本原理</td>
+              </tr>
+              <tr className="culture-map__row culture-map__row--sub">
+                <td>Chinese Culture III-3</td>
+                <td></td>
+                <td>毛泽东思想及中国特色社会主义思想概论</td>
+              </tr>
+              <tr className="culture-map__row culture-map__row--iv">
+                <td rowSpan={3}>Chinese Culture IV</td>
+                <td>Chinese Culture IV</td>
+                <td>Chinese Modern Society</td>
+                <td>中国近现代变迁</td>
+              </tr>
+              <tr className="culture-map__row culture-map__row--sub">
+                <td>Chinese Culture IV-1</td>
+                <td></td>
+                <td>中国近现代史纲要</td>
+              </tr>
+              <tr className="culture-map__row culture-map__row--sub">
+                <td>Chinese Culture IV-2</td>
+                <td></td>
+                <td>习近平新时代中国特色社会主义思想概论</td>
+              </tr>
+            </tbody>
+          </table>
         </section>
       </main>
     </div>
